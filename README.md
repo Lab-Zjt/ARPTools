@@ -1,6 +1,6 @@
 # ARPTools
 
-Now it accomplished the basic requirement, includes ARP broadcast, ARP attack, and data transmission. But the speed of data transmission is slow and I still can not solve this problem.
+Now it accomplished the basic requirement, includes ARP broadcast, ARP attack, and data transmission. But the speed of data transmission is slow and I still can not solve this problem. You have to run this program by root.
 
 ## Command Line Interface
 
