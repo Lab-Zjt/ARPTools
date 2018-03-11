@@ -169,6 +169,10 @@ void dataTransmit(int target, IMMAP *mapp){
 void dataTransmitPrepare(int target, IMMAP *mapp){
   std::thread t(ARPAttack, target, mapp);
   t.detach();
+  for (int i = 0 ; i < 7 ; i ++) {
+    std::thread t1(dataTransmit, target, mapp);
+    t1.detach();
+  }
   dataTransmit(target, mapp);
 }
 void selectDataTransmitTarget(IMMAP *mapp){
