@@ -1,5 +1,6 @@
 #include "myarpt.hpp"
 #include <fcntl.h>
+#include <cstdarg>
 
 void ARPRequest(IMMAP *mapp){
   EtherPack request;
@@ -198,4 +199,5 @@ void printHex(byte *str, int size){
     printf("%02x ", *str ++);
   }
 }
+
 

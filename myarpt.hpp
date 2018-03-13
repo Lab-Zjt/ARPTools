@@ -13,6 +13,40 @@
 #include <thread>
 
 typedef unsigned char byte;
+class bytestr {
+  byte *ustr;
+  int size;
+  bool tempFlag;
+public:
+  byte *getStr(){
+    return ustr;
+  }
+  int getSize(){
+    return size;
+  }
+  bytestr(byte *str, int s){
+    ustr = str;
+    size = s;
+    tempFlag = false;
+  }
+  bytestr & operator+(bytestr & b){
+    auto nstr = new bytestr(nullptr, 0);
+    nstr->tempFlag = true;
+    nstr->ustr = new byte[this->size + b.size];
+    nstr->size = this->size + b.size;
+    memcpy(nstr->ustr, this->ustr, this->size);
+    memcpy(nstr->ustr + this->size, b.ustr, b.size);
+    return *nstr;
+  }
+  bytestr & ref(){
+    return *this;
+  }
+  ~bytestr(){
+    if (tempFlag) {
+      delete[]ustr;
+    }
+  }
+};
 struct IMMAP {
   byte IPAddress[4] = {0x00};
   byte MACAddress[6] = {0x00};
@@ -45,7 +79,7 @@ struct EtherPack {
 IMMAP *ARPRequest();
 void ARPRequest(IMMAP *mapp);
 void IMMAPprint(IMMAP *mapp);
-void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, countMutex* count);
+void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, countMutex *count);
 void ARPAttack(int victim, IMMAP *mapp);
 int bytencmp(const byte *b1, const byte *b2, int n);
 void printHex(byte *str, int size);

@@ -30,7 +30,7 @@ IMMAP *broadcast(IMMAP *mapp){
 void menu(){
   clear();
   printf(
-    "Welcome to use my ARP tools:\n\t1.ARP Broadcast\n\t2.ARP Attack\n\t3.Data Transmission\n\t4.Print IP-MAC Map\n"
+    "Welcome to use my ARP tools:\n\t1.ARP Broadcast\n\t2.ARP Attack\n\t3.Data Transmission\n\t4.Print IP-MAC Map\n\t5.DNS Query\n"
       "Select one or enter q to quit:");
 }
 void printMap(IMMAP *mapp){
@@ -40,6 +40,12 @@ void printMap(IMMAP *mapp){
   } else {
     IMMAPprint(mapp);
   }
+  getchar();
+  menu();
+}
+void DNSQuery(){
+  clear();
+  DNSRequest();
   getchar();
   menu();
 }
@@ -61,6 +67,8 @@ void mainLoop(){
       selectDataTransmitTarget(mapp);
     } else if (op == '4') {
       printMap(mapp);
+    } else if (op == '5') {
+      DNSQuery();
     }
   }
 }
