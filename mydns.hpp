@@ -26,5 +26,6 @@ struct answer{
 };
 void DNSRequest();
 void DNSAnswerParser(byte* buf);
+bytestr addrToDnsFormat();
 
 #endif
