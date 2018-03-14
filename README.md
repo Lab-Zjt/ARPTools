@@ -20,5 +20,5 @@ It allows you to select a victim and transmit his or her data to your machine, a
 
 ## DNS Query
 
-I just do the fxxk DNS Query and it can only get my blog's IP because I hardcode it in my code. This function only be used to learn what is DNS Query, and it will update a few days later.
+Now it can work for querying a domain name's IPv4 address. Enter 5 at menu, and enter the domain name, you can get the answer later.
 
