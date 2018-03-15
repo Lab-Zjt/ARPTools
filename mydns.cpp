@@ -1,10 +1,11 @@
 #include <arpa/inet.h>
+#include <vector>
 #include "mydns.hpp"
 
 void DNSRequest(){
   int fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   sockaddr_in dest;
-  dest.sin_addr.s_addr = inet_addr("202.114.0.242");
+  dest.sin_addr.s_addr = inet_addr("8.8.8.8");
   dest.sin_port = htons(53);
   dest.sin_family = AF_INET;
   dnsHeader header;
@@ -32,17 +33,14 @@ void DNSRequest(){
     return;
   }
   byte buf[4096];
-  socklen_t l;
+  socklen_t l=sizeof(dest);
   res = recvfrom(fd, buf, 4096, 0, (sockaddr *) &dest, &l);
   if (res < 0) {
     perror("Fuck Again");
     return;
-  } else {
-    printf("Parse A Record Successfully.\n");
   }
-  auto offset = msg.getSize() + 12;
-  printf("IP:%d.%d.%d.%d\n", buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]);
   close(fd);
+  DNSParser(bytestr(buf,res).ref(),msg.getSize());
 }
 bytestr addrToDnsFormat(){
   byte space[1] = {0x00};
@@ -76,5 +74,35 @@ bytestr addrToDnsFormat(){
   delete[]ptrlist;
   delete res;
   return str;
+}
+void DNSParser(bytestr & res, const int & answerOffset){
+  auto buf = res.getStr();
+  auto size = res.getSize();
+  dnsHeader header;
+  memcpy(&header, buf, sizeof(header));
+  auto answer = header.resource[0]*256+header.resource[1];
+  int offset = answerOffset;
+  for (; offset < size ;) {
+    dnsAnswerHeader answerHeader;
+    memcpy(&answerHeader, buf + offset, sizeof(answerHeader));
+    offset += sizeof(answerHeader);
+    int len = answerHeader.dataLen[0] * 256 + answerHeader.dataLen[1];
+    auto addr = new byte[len];
+    memcpy(addr, buf + offset, len);
+    if (answerHeader.type[1] == 0x05) {
+      int tempOffset = 0;
+      byte tempLen;
+      printf("CNAME:");
+      while ((tempLen = buf[offset + tempOffset]) != 0x00) {
+        addr[tempOffset + tempLen + 1] = '.';
+        tempOffset += tempLen + 1;
+      }
+      printf("%s\n", addr + 1);
+    } else {
+      printf("IP:%d.%d.%d.%d\n", buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]);
+    }
+    delete addr;
+    offset += len;
+  }
 }
 
