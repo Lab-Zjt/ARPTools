@@ -41,10 +41,10 @@ void DNSRequest(){
   }
   DNSParser(bytestr(buf, res).ref(), msg.getSize());
   //IPv6 Request
-  bzero(buf,res);
-  q.type[1]=0x1c;
-  auto ipv6Msg= (bytestr((byte *) &header, sizeof(header)).ref()) + addr +
-                (bytestr(q.type, 2).ref()) + (bytestr(q.Class, 2).ref());
+  bzero(buf, res);
+  q.type[1] = 0x1c;
+  auto ipv6Msg = (bytestr((byte *) &header, sizeof(header)).ref()) + addr +
+                 (bytestr(q.type, 2).ref()) + (bytestr(q.Class, 2).ref());
   res = sendto(fd, ipv6Msg.getStr(), ipv6Msg.getSize(), 0, (sockaddr *) &dest, sizeof(dest));
   if (res < 0) {
     perror("Fuck");
@@ -111,12 +111,22 @@ void DNSParser(bytestr & res, const int & answerOffset){
     if (answerHeader.type[1] == 0x05) {
       int tempOffset = 0;
       byte tempLen;
+      bool comFlag = false;
       printf("CNAME:");
       while ((tempLen = buf[offset + tempOffset]) != 0x00) {
+        if (addr[tempOffset + tempLen + 1] == 0xc0) {
+          comFlag = true;
+        }
         addr[tempOffset + tempLen + 1] = '.';
         tempOffset += tempLen + 1;
       }
-      printf("%s\n", addr + 1);
+      addr[tempOffset + tempLen] = '\0';
+      if (comFlag){
+        printf("%s.com\n", addr + 1);
+      }else{
+  
+        printf("%s\n", addr + 1);
+      }
     } else if (answerHeader.type[1] == 0x01) {
       printf("IP:%d.%d.%d.%d\n", buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]);
     } else if (answerHeader.type[1] == 0x1c) {
