@@ -33,14 +33,30 @@ void DNSRequest(){
     return;
   }
   byte buf[4096];
-  socklen_t l=sizeof(dest);
+  socklen_t l = sizeof(dest);
   res = recvfrom(fd, buf, 4096, 0, (sockaddr *) &dest, &l);
   if (res < 0) {
     perror("Fuck Again");
     return;
   }
+  DNSParser(bytestr(buf, res).ref(), msg.getSize());
+  //IPv6 Request
+  bzero(buf,res);
+  q.type[1]=0x1c;
+  auto ipv6Msg= (bytestr((byte *) &header, sizeof(header)).ref()) + addr +
+                (bytestr(q.type, 2).ref()) + (bytestr(q.Class, 2).ref());
+  res = sendto(fd, ipv6Msg.getStr(), ipv6Msg.getSize(), 0, (sockaddr *) &dest, sizeof(dest));
+  if (res < 0) {
+    perror("Fuck");
+    return;
+  }
+  res = recvfrom(fd, buf, 4096, 0, (sockaddr *) &dest, &l);
+  if (res < 0) {
+    perror("Fuck Again");
+    return;
+  }
+  DNSParser(bytestr(buf, res).ref(), msg.getSize());
   close(fd);
-  DNSParser(bytestr(buf,res).ref(),msg.getSize());
 }
 bytestr addrToDnsFormat(){
   byte space[1] = {0x00};
@@ -80,7 +96,10 @@ void DNSParser(bytestr & res, const int & answerOffset){
   auto size = res.getSize();
   dnsHeader header;
   memcpy(&header, buf, sizeof(header));
-  auto answer = header.resource[0]*256+header.resource[1];
+  auto answer = header.resource[0] * 256 + header.resource[1];
+  if (answer == 0) {
+    return;
+  }
   int offset = answerOffset;
   for (; offset < size ;) {
     dnsAnswerHeader answerHeader;
@@ -98,8 +117,14 @@ void DNSParser(bytestr & res, const int & answerOffset){
         tempOffset += tempLen + 1;
       }
       printf("%s\n", addr + 1);
-    } else {
+    } else if (answerHeader.type[1] == 0x01) {
       printf("IP:%d.%d.%d.%d\n", buf[offset], buf[offset + 1], buf[offset + 2], buf[offset + 3]);
+    } else if (answerHeader.type[1] == 0x1c) {
+      printf("IP:");
+      for (int i = 0 ; i < 14 ; i += 2) {
+        printf("%02x%02x:", buf[offset + i], buf[offset + i + 1]);
+      }
+      printf("%02x%02x\n", buf[offset + 14], buf[offset + 15]);
     }
     delete addr;
     offset += len;

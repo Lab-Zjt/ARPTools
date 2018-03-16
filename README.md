@@ -30,7 +30,7 @@ It allows you to select a victim and transmit his or her data to your machine, a
 
 ## DNS Query
 
-现在它可以用来查询一个域名的IPV4地址或CNAME（别名）。
+现在它可以用来查询一个域名的IPV4地址或者IPV6地址或CNAME（别名）。
 
-Now it can work for querying a domain name's IPv4 address and CNAME. Enter 5 at menu, and enter the domain name, you can get the answer later.
+Now it can work for querying a domain name's IPv4 address, IPv6 address and CNAME. Enter 5 at menu, and enter the domain name, you can get the answer later.
 
