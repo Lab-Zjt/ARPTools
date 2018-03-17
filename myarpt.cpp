@@ -1,17 +1,18 @@
 #include "myarpt.hpp"
 #include <fcntl.h>
 #include <cstdarg>
+#include <mutex>
 
 void ARPRequest(IMMAP *mapp){
   EtherPack request;
-  countMutex c;
+  int c = 0;
   for (byte i = 0 ; i < 16 ; i ++) {
-    std::thread t(ARPBroadcastMultiThread, request, mapp, byte(i * 16), byte(i * 16 + 15), &c);
+    std::thread t(ARPBroadcastMultiThread, request, mapp, byte(i * 16), byte(i * 16 + 15), std::ref(c));
     t.detach();
   }
   while (true) {
-    if (c.count == 16) {
-      c.count = 0;
+    if (c == 16) {
+      c = 0;
       return;
     } else {
       std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -38,7 +39,7 @@ void IMMAPprint(IMMAP *mapp){
   }
   printf("Print IP-MAC Map Successfully.Found %d Machine.\n", count);
 }
-void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, countMutex *count){
+void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, int & count){
   byte end = endIndex;
   int fd = socket(PF_PACKET, SOCK_RAW, htons(0xffff));
   fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -73,11 +74,11 @@ void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, by
     close(recvfd);
   }
   close(fd);
-  while (true) {
-    if (! count->mutex) {
-      count->mutex = true;
-      count->count ++;
-      count->mutex = false;
+  std::mutex mutex;
+  for (;;) {
+    if (mutex.try_lock()) {
+      count ++;
+      mutex.unlock();
       return;
     } else {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -147,7 +148,6 @@ void dataTransmit(int target, IMMAP *mapp){
   for (int i = 0 ; i < 65536 * 256 ;) {
     long res = recvfrom(recvfd, buffer, 4096, 0, (struct sockaddr *) &rsal, &rsalen);
     if (res > 0) {
-      //printf("Captured: %d packet(s)\r", ++ i);
       ++ i;
       fflush(stdout);
       if (bytencmp(buffer + 0x1a, mapp[target].IPAddress, 4) == 0/*Receive Data From Victim*/) {

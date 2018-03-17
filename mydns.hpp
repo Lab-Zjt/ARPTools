@@ -23,11 +23,6 @@ struct dnsAnswerHeader {
   byte TimeToLive[4];
   byte dataLen[2];
 };
-namespace DNSType {
-  enum {
-    IPv6 = 0x001c, IPv4 = 0x0001, CNAME = 0x0005
-  };
-}
 void DNSRequest();
 void DNSAnswerParser(byte *buf);
 bytestr addrToDnsFormat();
