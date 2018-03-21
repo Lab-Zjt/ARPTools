@@ -12,9 +12,21 @@ After you start the program, you can choose 1 option from the menu which include
 
 ## ARP Broadcast
 
-这个功能允许你广播ARP广播来寻找同一个局域网内的其他机器，但是你必须修改HOSTMAC, HOSTIP, GATEWAY 在 myarpt.hpp 的 25,26,27,31,39,40 行，然后重新编译这个程序。
+这个功能允许你广播ARP请求来寻找同一个局域网内的其他机器，现在你可以通过在与程序相同的目录下新建一个“im.config”文件来修改你的配置。格式如下：
 
-It allows you to broadcast ARP request and find other machines in the LAN. But you have to modify the HOSTMAC, HOSTIP, GATEWAY in myarpt.hpp:25,26,27,31,39,40 to yourself (You can find them by using ifconfig command) and recompile this program because I am lazy and hardcore them in this program.
+```
+ip=192.168.0.1
+mac=aa:bb:cc:dd:ee::ff
+gateway=192.168.0.254
+```
+
+It allows you to broadcast ARP request and find other machines in the LAN. Now you can create a file named "im.config" to modify your settings in the same directory with the program. Here is the format:
+
+```
+ip=192.168.0.1
+mac=aa:bb:cc:dd:ee::ff
+gateway=192.168.0.254
+```
 
 ## ARP Attack
 

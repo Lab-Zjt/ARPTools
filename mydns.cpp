@@ -116,15 +116,16 @@ void DNSParser(bytestr & res, const int & answerOffset){
       while ((tempLen = buf[offset + tempOffset]) != 0x00) {
         if (addr[tempOffset + tempLen + 1] == 0xc0) {
           comFlag = true;
+          break;
         }
         addr[tempOffset + tempLen + 1] = '.';
         tempOffset += tempLen + 1;
       }
-      addr[tempOffset + tempLen] = '\0';
-      if (comFlag){
+      addr[tempOffset + tempLen + 1] = '\0';
+      if (comFlag) {
         printf("%s.com\n", addr + 1);
-      }else{
-  
+      } else {
+        
         printf("%s\n", addr + 1);
       }
     } else if (answerHeader.type[1] == 0x01) {
