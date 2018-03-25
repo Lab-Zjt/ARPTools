@@ -75,7 +75,7 @@ struct EtherPack {
 IMMAP *ARPRequest();
 void ARPRequest(IMMAP *mapp);
 void IMMAPprint(IMMAP *mapp);
-void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, int & count);
+void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, std::atomic<int> & count);
 void ARPAttack(int victim, IMMAP *mapp);
 int bytencmp(const byte *b1, const byte *b2, int n);
 void printHex(byte *str, int size);

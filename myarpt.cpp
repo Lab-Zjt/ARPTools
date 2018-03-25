@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <cstdarg>
 #include <mutex>
+#include <atomic>
 
 extern byte hostMAC[6];
 extern byte hostIP[4];
@@ -15,7 +16,8 @@ EtherPack::EtherPack(){
 
 void ARPRequest(IMMAP *mapp){
   EtherPack request;
-  int c = 0;
+  std::atomic<int> c;
+  c = 0;
   for (byte i = 0 ; i < 16 ; i ++) {
     std::thread t(ARPBroadcastMultiThread, request, mapp, byte(i * 16), byte(i * 16 + 15), std::ref(c));
     t.detach();
@@ -52,7 +54,7 @@ void IMMAPprint(IMMAP *mapp){
   }
   printf("Print IP-MAC Map Successfully.Found %d Machine.\n", count);
 }
-void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, int & count){
+void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, byte endIndex, std::atomic<int> & count){
   byte end = endIndex;
   int fd = socket(PF_PACKET, SOCK_RAW, htons(0xffff));
   fcntl(fd, F_SETFL, O_NONBLOCK);
@@ -87,16 +89,7 @@ void ARPBroadcastMultiThread(EtherPack arpPack, IMMAP *mapp, byte beginIndex, by
     close(recvfd);
   }
   close(fd);
-  std::mutex mutex;
-  for (;;) {
-    if (mutex.try_lock()) {
-      count ++;
-      mutex.unlock();
-      return;
-    } else {
-      std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-  }
+  count ++;
 }
 void ARPAttack(int victim, IMMAP *mapp){
   if (mapp[victim].IPAddress[0] != 0) {
