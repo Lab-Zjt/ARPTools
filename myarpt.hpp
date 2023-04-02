@@ -11,6 +11,7 @@
 #include <netpacket/packet.h>
 #include <net/if.h>
 #include <thread>
+#include <atomic>
 
 typedef unsigned char byte;
 class bytestr {
